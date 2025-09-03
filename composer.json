@@ -1,8 +1,0 @@
-{
-    "require-dev": {
-        "laravel/breeze": "^2.3"
-    },
-    "require": {
-        "jeroennoten/laravel-adminlte": "^3.15"
-    }
-}
