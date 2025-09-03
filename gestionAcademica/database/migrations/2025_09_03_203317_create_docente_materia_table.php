@@ -6,21 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
-        Schema::create('materia_submateria', function (Blueprint $table) {
-            $table->primary(['materia_id', 'submateria_id']);
+        Schema::create('docente_materia', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('docente_id')->constrained('docentes')->onDelete('cascade');
             $table->foreignId('materia_id')->constrained('materias')->onDelete('cascade');
-            $table->foreignId('submateria_id')->constrained('submaterias')->onDelete('cascade');
+            $table->year('ano_lectivo');
+            $table->enum('turno', ['Mañana', 'Tarde', 'Noche']);
             $table->timestamps();
         });
     }
-
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('materia_submateria');
+        Schema::dropIfExists('docente_materia');
     }
 };

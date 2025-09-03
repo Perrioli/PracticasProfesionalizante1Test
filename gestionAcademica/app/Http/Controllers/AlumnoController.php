@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Alumno;
 use App\Models\Modulo;
+use App\Models\Materia;
+use App\Models\PlanEstudio;
 use Illuminate\Http\Request;
-use App\Models\Submateria;
 
 class AlumnoController extends Controller
 {
@@ -37,8 +38,7 @@ class AlumnoController extends Controller
 
     public function show(Alumno $alumno)
     {
-        // Cargar relaciones para mostrar información completa
-        $alumno->load('documentaciones', 'pases', 'cursos', 'submaterias');
+        $alumno->load('documentaciones', 'pases', 'modulos', 'materias');
         return view('alumnos.show', compact('alumno'));
     }
 
@@ -70,7 +70,6 @@ class AlumnoController extends Controller
 
     public function documentacion(Alumno $alumno)
     {
-
         $documentosRequeridos = [
             'DNI',
             'Partida de nacimiento',
@@ -81,73 +80,59 @@ class AlumnoController extends Controller
 
         $documentacionExistente = $alumno->documentaciones->keyBy('tipo_documento');
 
-
         return view('alumnos.documentacion', compact('alumno', 'documentosRequeridos', 'documentacionExistente'));
     }
-
 
     public function perfil(Alumno $alumno)
     {
         $fotoPerfil = $alumno->documentaciones()->where('tipo_documento', 'Foto 4x4')->first();
+        $modulosCursados = $alumno->modulos()->with('planEstudio', 'materias')->orderBy('orden')->get();
+        $carrera = $modulosCursados->isNotEmpty() ? $modulosCursados->first()->planEstudio : null;
+        $materiasData = $alumno->materias()->with('docentes')->get()->keyBy('id');
 
-        $modulosCursados = $alumno->modulos()
-            ->with('materias.submaterias')
-            ->orderBy('orden')
-            ->get();
-
-        $submateriasData = $alumno->submaterias()
-            ->with('docentes')
-            ->get()
-            ->keyBy('id');
-
-        return view('alumnos.perfil', compact('alumno', 'fotoPerfil', 'modulosCursados', 'submateriasData'));
+        return view('alumnos.perfil', compact('alumno', 'fotoPerfil', 'modulosCursados', 'materiasData', 'carrera'));
     }
 
     public function editAcademico(Alumno $alumno)
     {
-        $modulosCursados = $alumno->modulos()->with('materias.submaterias')->orderBy('orden')->get();
-        $submateriasData = $alumno->submaterias()->with('docentes')->get()->keyBy('id');
+        $modulosCursados = $alumno->modulos()->with('materias')->orderBy('orden')->get();
+        $materiasData = $alumno->materias()->with('docentes')->get()->keyBy('id');
+        $planesDeEstudio = PlanEstudio::orderBy('nombre')->get();
+        $modulosDisponibles = Modulo::orderBy('orden')->get();
 
-
-        $modulosInscriptosIds = $alumno->modulos->pluck('id');
-
-        $modulosDisponibles = Modulo::whereNotIn('id', $modulosInscriptosIds)->orderBy('orden')->get();
-
-        return view('alumnos.academico', compact('alumno', 'modulosCursados', 'submateriasData', 'modulosDisponibles'));
+        return view('alumnos.academico', compact(
+            'alumno',
+            'modulosCursados',
+            'materiasData',
+            'planesDeEstudio',
+            'modulosDisponibles'
+        ));
     }
 
     public function enrollAcademico(Request $request, Alumno $alumno)
     {
         $request->validate(['modulo_id' => 'required|exists:modulos,id']);
-
         $moduloId = $request->modulo_id;
-        $anoLectivo = date('Y');
 
-        $alumno->modulos()->attach($moduloId, ['estado' => 'Cursando', 'ano_lectivo' => $anoLectivo]);
+        $alumno->modulos()->attach($moduloId, ['estado' => 'Cursando', 'ano_lectivo' => date('Y')]);
 
-        $modulo = Modulo::with('materias.submaterias')->find($moduloId);
-        $submateriasIds = [];
-        foreach ($modulo->materias as $materia) {
-            $submateriasIds = array_merge($submateriasIds, $materia->submaterias->pluck('id')->toArray());
-        }
-
+        $modulo = Modulo::with('materias')->find($moduloId);
         $registros = [];
-        foreach (array_unique($submateriasIds) as $submateriaId) {
-            $registros[$submateriaId] = ['estado' => 'Cursando'];
+        foreach ($modulo->materias as $materia) {
+            $registros[$materia->id] = ['estado' => 'Cursando'];
         }
-        $alumno->submaterias()->attach($registros);
+        $alumno->materias()->attach($registros);
 
         return redirect()->route('alumnos.academico.edit', $alumno)->with('success', 'Alumno inscripto en el módulo exitosamente.');
     }
-
-    public function updateSubmateria(Request $request, Alumno $alumno, Submateria $submateria)
+    public function updateMateria(Request $request, Alumno $alumno, Materia $materia)
     {
         $request->validate([
             'nota_final' => 'nullable|numeric|min:0|max:10',
             'estado' => 'required|string|in:Cursando,Aprobada,Previa,Libre',
         ]);
 
-        $alumno->submaterias()->updateExistingPivot($submateria->id, [
+        $alumno->materias()->updateExistingPivot($materia->id, [
             'nota_final' => $request->nota_final,
             'estado' => $request->estado,
         ]);

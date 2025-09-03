@@ -38,6 +38,9 @@
                     <li class="list-group-item">
                         <b>Escuela de Origen</b> <a class="float-right">{{ $alumno->escuela_origen }}</a>
                     </li>
+                    <li class="list-group-item">
+                        <b>Carrera</b> <a class="float-right">{{ $carrera->nombre ?? 'No asignada' }}</a>
+                    </li>
                 </ul>
 
                 <a href="{{ route('alumnos.documentacion', $alumno) }}" class="btn btn-primary btn-block"><b>Ver Documentación</b></a>
@@ -71,40 +74,26 @@
                     <thead>
                         <tr>
                             <th>Materia</th>
-                            <th>Submateria</th>
                             <th>Nota Final/Parcial</th>
                             <th>Estado</th>
                             <th>Docente</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {{-- Itera a través de la estructura anidada: Modulo -> Materias -> Submaterias --}}
                         @foreach ($modulo->materias as $materia)
-                        @foreach ($materia->submaterias as $submateria)
                         @php
-                        // Busca la información específica de esta submateria para este alumno
-                        $data = $submateriasData->get($submateria->id);
+                        $data = $materiasData->get($materia->id);
                         @endphp
                         <tr>
                             <td>{{ $materia->nombre }}</td>
-                            <td>{{ $submateria->nombre }}</td>
-
-                            {{-- Si se encontró información, la mostramos --}}
                             @if ($data)
-                            <td>
-                                <span class="badge bg-primary">{{ $data->pivot->nota_final ?? '---' }}</span>
-                            </td>
+                            <td><span class="badge bg-primary">{{ $data->pivot->nota_final ?? '---' }}</span></td>
                             <td>{{ $data->pivot->estado }}</td>
-                            <td>
-                                {{-- Muestra el primer docente asignado a esa submateria --}}
-                                {{ $data->docentes->first()->apellido ?? 'Sin asignar' }}
-                            </td>
+                            <td>{{ $data->docentes->first()->apellido ?? 'Sin asignar' }}</td>
                             @else
-                            {{-- Si el alumno no está inscripto en esta submateria, se indica --}}
                             <td colspan="3" class="text-center text-muted"><em>No inscripto</em></td>
                             @endif
                         </tr>
-                        @endforeach
                         @endforeach
                     </tbody>
                 </table>

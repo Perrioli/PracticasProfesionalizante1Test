@@ -10,10 +10,10 @@ class Docente extends Model
     use HasFactory;
     protected $fillable = ['nombre', 'apellido', 'dni', 'titulo', 'email'];
 
-    public function submaterias()
+    public function materias()
     {
-        return $this->belongsToMany(Submateria::class, 'docente_submateria')
-                    ->withPivot('ano_lectivo', 'turno')
-                    ->withTimestamps();
+        return $this->belongsToMany(Materia::class, 'docente_materia')
+            ->withPivot('ano_lectivo', 'turno')
+            ->withTimestamps();
     }
 }

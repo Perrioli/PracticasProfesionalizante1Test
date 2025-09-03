@@ -23,21 +23,21 @@ class Alumno extends Model
     public function cursos()
     {
         return $this->belongsToMany(Curso::class, 'alumno_curso')
-                    ->withPivot('ano_lectivo', 'estado')
-                    ->withTimestamps();
+            ->withPivot('ano_lectivo', 'estado')
+            ->withTimestamps();
     }
 
     public function modulos()
     {
         return $this->belongsToMany(Modulo::class, 'alumno_modulo')
-                    ->withPivot('estado', 'ano_lectivo')
-                    ->withTimestamps();
+            ->withPivot('estado', 'ano_lectivo')
+            ->withTimestamps();
     }
 
-    public function submaterias()
+    public function materias()
     {
-        return $this->belongsToMany(Submateria::class, 'alumno_submateria')
-                    ->withPivot('nota_final', 'estado', 'fecha_evaluacion')
-                    ->withTimestamps();
+        return $this->belongsToMany(Materia::class, 'alumno_materia')
+            ->withPivot('nota_final', 'estado', 'fecha_evaluacion')
+            ->withTimestamps();
     }
 }
