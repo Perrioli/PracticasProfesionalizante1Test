@@ -330,23 +330,28 @@ return [
         ['header' => 'GESTIÓN PRINCIPAL'],
         [
             'text' => 'Alumnos',
-            'route' => 'alumnos.index', // Usamos el nombre de la ruta
+            'route' => 'alumnos.index',
             'icon' => 'fas fa-fw fa-user-graduate',
         ],
         [
             'text' => 'Docentes',
-            'route' => 'docentes.index', // Usamos el nombre de la ruta
+            'route' => 'docentes.index',
             'icon' => 'fas fa-fw fa-chalkboard-teacher',
         ],
         [
-            'text' => 'Cursos',
-            'route' => 'cursos.index', // Usamos el nombre de la ruta
-            'icon' => 'fas fa-fw fa-school',
+            'text' => 'Planes de Estudio',
+            'route' => 'planes-de-estudio.index',
+            'icon' => 'fas fa-fw fa-book-open',
         ],
         [
-            'text' => 'Planes de Estudio',
-            'route' => 'planes-de-estudio.index', // Usamos el nombre de la ruta
-            'icon' => 'fas fa-fw fa-book-open',
+            'text' => 'Módulos',
+            'route' => 'modulos.index',
+            'icon' => 'fas fa-fw fa-layer-group',
+        ],
+        [
+            'text' => 'Cursos',
+            'route' => 'cursos.index',
+            'icon' => 'fas fa-fw fa-school',
         ],
     ],
 

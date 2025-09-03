@@ -14,10 +14,11 @@ class ModuloController extends Controller
         return view('modulos.index', compact('modulos'));
     }
 
-    public function create()
+    public function create(Request $request) // Añade Request
     {
         $planes = PlanEstudio::all();
-        return view('modulos.create', compact('planes'));
+        $planIdSeleccionado = $request->query('plan_id'); // Captura el ID de la URL
+        return view('modulos.create', compact('planes', 'planIdSeleccionado'));
     }
 
     public function store(Request $request)

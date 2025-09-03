@@ -8,7 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class Materia extends Model
 {
     use HasFactory;
-    protected $fillable = ['nombre', 'carga_horaria_total', 'modulo_id'];
+
+    // Añade los nuevos campos a $fillable
+    protected $fillable = [
+        'nombre', 
+        'carga_horaria_total', 
+        'modulo_id',
+        'codigo',
+        'regimen'
+    ];
 
     public function modulo()
     {
@@ -18,5 +26,14 @@ class Materia extends Model
     public function submaterias()
     {
         return $this->belongsToMany(Submateria::class, 'materia_submateria')->withTimestamps();
+    }
+    
+    // V ↓↓↓ AÑADE ESTA NUEVA RELACIÓN ↓↓↓ V
+    /**
+     * Las materias que son prerrequisito para esta materia.
+     */
+    public function prerequisites()
+    {
+        return $this->belongsToMany(Materia::class, 'materia_prerequisites', 'materia_id', 'prerequisite_id');
     }
 }
