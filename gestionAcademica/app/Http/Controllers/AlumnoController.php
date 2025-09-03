@@ -70,7 +70,7 @@ class AlumnoController extends Controller
 
     public function documentacion(Alumno $alumno)
     {
-        // 1. Define la lista de todos los documentos que son requeridos.
+
         $documentosRequeridos = [
             'DNI',
             'Partida de nacimiento',
@@ -79,28 +79,22 @@ class AlumnoController extends Controller
             'Pase',
         ];
 
-        // 2. Obtén la documentación que el alumno YA ha presentado.
-        // Usamos keyBy() para poder buscar fácilmente por 'tipo_documento'.
         $documentacionExistente = $alumno->documentaciones->keyBy('tipo_documento');
 
-        // 3. Envía ambas listas a la vista.
+
         return view('alumnos.documentacion', compact('alumno', 'documentosRequeridos', 'documentacionExistente'));
     }
 
-    // En app/Http/Controllers/AlumnoController.php
 
     public function perfil(Alumno $alumno)
     {
-        // busca la foto de perfil (arreglar centrado y vista despues).
         $fotoPerfil = $alumno->documentaciones()->where('tipo_documento', 'Foto 4x4')->first();
 
-        // Con 'with()', cargamos también las materias y submaterias anidadas en una sola consulta.
         $modulosCursados = $alumno->modulos()
             ->with('materias.submaterias')
             ->orderBy('orden')
             ->get();
 
-        //keyBy('id') para poder buscar información en la vista.
         $submateriasData = $alumno->submaterias()
             ->with('docentes')
             ->get()
@@ -111,40 +105,32 @@ class AlumnoController extends Controller
 
     public function editAcademico(Alumno $alumno)
     {
-        // Obtenemos los módulos que el alumno ya está cursando (igual que en el perfil)
         $modulosCursados = $alumno->modulos()->with('materias.submaterias')->orderBy('orden')->get();
         $submateriasData = $alumno->submaterias()->with('docentes')->get()->keyBy('id');
 
-        // Obtenemos los IDs de los módulos en los que el alumno ya está inscripto
+
         $modulosInscriptosIds = $alumno->modulos->pluck('id');
 
-        // Buscamos todos los módulos que NO estén en la lista de inscriptos para mostrarlos en el dropdown
         $modulosDisponibles = Modulo::whereNotIn('id', $modulosInscriptosIds)->orderBy('orden')->get();
 
         return view('alumnos.academico', compact('alumno', 'modulosCursados', 'submateriasData', 'modulosDisponibles'));
     }
 
-    /**
-     * Inscribe a un alumno en un nuevo módulo y sus submaterias.
-     */
     public function enrollAcademico(Request $request, Alumno $alumno)
     {
         $request->validate(['modulo_id' => 'required|exists:modulos,id']);
 
         $moduloId = $request->modulo_id;
-        $anoLectivo = date('Y'); // Año actual
+        $anoLectivo = date('Y');
 
-        // 1. Inscribimos al alumno en el módulo principal
         $alumno->modulos()->attach($moduloId, ['estado' => 'Cursando', 'ano_lectivo' => $anoLectivo]);
 
-        // 2. Obtenemos todas las submaterias de ese módulo
         $modulo = Modulo::with('materias.submaterias')->find($moduloId);
         $submateriasIds = [];
         foreach ($modulo->materias as $materia) {
             $submateriasIds = array_merge($submateriasIds, $materia->submaterias->pluck('id')->toArray());
         }
 
-        // 3. Creamos los registros iniciales para cada submateria en la tabla pivote
         $registros = [];
         foreach (array_unique($submateriasIds) as $submateriaId) {
             $registros[$submateriaId] = ['estado' => 'Cursando'];
@@ -154,13 +140,6 @@ class AlumnoController extends Controller
         return redirect()->route('alumnos.academico.edit', $alumno)->with('success', 'Alumno inscripto en el módulo exitosamente.');
     }
 
-    // En app/Http/Controllers/AlumnoController.php
-
-    // ...
-
-    /**
-     * Actualiza la información de una submateria para un alumno específico (nota y estado).
-     */
     public function updateSubmateria(Request $request, Alumno $alumno, Submateria $submateria)
     {
         $request->validate([
@@ -168,7 +147,6 @@ class AlumnoController extends Controller
             'estado' => 'required|string|in:Cursando,Aprobada,Previa,Libre',
         ]);
 
-        // Usamos updateExistingPivot para actualizar los campos en la tabla intermedia
         $alumno->submaterias()->updateExistingPivot($submateria->id, [
             'nota_final' => $request->nota_final,
             'estado' => $request->estado,
