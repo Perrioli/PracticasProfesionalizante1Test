@@ -93,6 +93,7 @@ class MateriaController extends Controller
     public function destroy(Materia $materia)
     {
         $materia->delete();
+
         return back()->with('success', 'Materia eliminada exitosamente.');
     }
 }

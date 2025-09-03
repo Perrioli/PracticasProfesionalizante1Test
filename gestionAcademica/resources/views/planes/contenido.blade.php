@@ -16,6 +16,10 @@
             </a>
         </div>
         <div class="card-body">
+            @if (session('success'))
+                <div class="alert alert-success">{{ session('success') }}</div>
+            @endif
+
             @forelse ($planEstudio->modulos->sortBy('orden') as $modulo)
                 <div class="card card-outline card-secondary mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
@@ -28,8 +32,7 @@
                     </div>
                     <div class="card-body p-0">
                         <table class="table table-sm">
-                           {{-- El contenido de la tabla no necesita cambios --}}
-                           <thead>
+                            <thead>
                                 <tr>
                                     <th>Código</th>
                                     <th>Asignatura</th>
@@ -44,9 +47,16 @@
                                         <td>{{ $materia->nombre }}</td>
                                         <td>{{ $materia->regimen }}</td>
                                         <td>
-                                            <a href="{{ route('materias.edit', $materia) }}" class="btn btn-xs btn-warning">
+                                            <a href="{{ route('materias.edit', $materia) }}" class="btn btn-xs btn-warning" title="Editar">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            <form action="{{ route('materias.destroy', $materia) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-xs btn-danger" title="Eliminar" onclick="return confirm('¿Estás seguro de que deseas eliminar esta materia? Se borrará permanentemente.')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>
                                 @empty

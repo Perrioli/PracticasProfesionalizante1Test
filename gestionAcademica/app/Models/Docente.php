@@ -8,12 +8,22 @@ use Illuminate\Database\Eloquent\Model;
 class Docente extends Model
 {
     use HasFactory;
-    protected $fillable = ['nombre', 'apellido', 'dni', 'titulo', 'email'];
 
-    public function materias()
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'nombre',
+        'apellido',
+        'dni',
+        'titulo',
+        'email',
+    ];
+
+    public function cursos()
     {
-        return $this->belongsToMany(Materia::class, 'docente_materia')
-            ->withPivot('ano_lectivo', 'turno')
-            ->withTimestamps();
+        return $this->belongsToMany(Curso::class, 'curso_materia_docente');
     }
 }

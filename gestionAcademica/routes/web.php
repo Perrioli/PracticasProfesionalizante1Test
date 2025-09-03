@@ -40,7 +40,12 @@ Route::resource('materias', MateriaController::class);
 
 // Rutas para Docentes y Cursos
 Route::resource('docentes', DocenteController::class);
+Route::get('docentes/{docente}/perfil', [DocenteController::class, 'perfil'])->name('docentes.perfil');
+
 Route::resource('cursos', CursoController::class);
+Route::get('/cursos/{curso}/horario', [CursoController::class, 'horario'])->name('cursos.horario');
+Route::post('/cursos/{curso}/horario', [CursoController::class, 'addHorario'])->name('cursos.horario.store');
+Route::delete('/horarios/{horario}', [CursoController::class, 'destroyHorario'])->name('horarios.destroy');
 
 // Rutas para Documentación
 Route::get('/alumnos/{alumno}/documentaciones/create', [DocumentacionController::class, 'create'])->name('documentaciones.create');
