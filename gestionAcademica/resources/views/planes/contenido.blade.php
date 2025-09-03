@@ -3,69 +3,67 @@
 @section('title', 'Gestionar Contenido del Plan')
 
 @section('content_header')
-<h1>Gestionar Contenido del Plan</h1>
-<h4>Plan de Estudio: <strong>{{ $planEstudio->nombre }}</strong></h4>
+    <h1>Gestionar Contenido del Plan</h1>
+    <h4>Plan de Estudio: <strong>{{ $planEstudio->nombre }}</strong></h4>
 @stop
 
 @section('content')
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="card-title">Módulos y Materias</h3>
-        {{-- Botón para ir al formulario de crear Módulo, preseleccionando este plan --}}
-        <a href="{{ route('modulos.create', ['plan_id' => $planEstudio->id]) }}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Agregar Módulo
-        </a>
-    </div>
-    <div class="card-body">
-        @forelse ($planEstudio->modulos->sortBy('orden') as $modulo)
-        <div class="card card-outline card-secondary mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="card-title mb-0">
-                    <strong>{{ $modulo->nombre }}</strong> ({{ $modulo->ano_correspondiente }}er Año)
-                </h4>
-                {{-- Botón para ir al formulario de crear Materia, preseleccionando este módulo --}}
-                <a href="{{ route('materias.create', ['modulo_id' => $modulo->id]) }}" class="btn btn-sm btn-success">
-                    <i class="fas fa-plus"></i> Agregar Materia
-                </a>
-                </a>
-            </div>
-            <div class="card-body p-0">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Código</th>
-                            <th>Asignatura</th>
-                            <th>Régimen</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($modulo->materias as $materia)
-                        <tr>
-                            <td>{{ $materia->codigo }}</td>
-                            <td>{{ $materia->nombre }}</td>
-                            <td>{{ $materia->regimen }}</td>
-                            <td>
-                                <a href="{{ route('materias.edit', $materia) }}" class="btn btn-xs btn-warning">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="4" class="text-center">No hay materias en este módulo.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">Módulos y Materias</h3>
+            <a href="{{ route('modulos.create', ['plan_id' => $planEstudio->id]) }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Agregar Módulo
+            </a>
         </div>
-        @empty
-        <div class="alert alert-info">Este plan de estudio aún no tiene módulos.</div>
-        @endforelse
+        <div class="card-body">
+            @forelse ($planEstudio->modulos->sortBy('orden') as $modulo)
+                <div class="card card-outline card-secondary mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="card-title mb-0">
+                            <strong>{{ $modulo->nombre }}</strong> ({{ $modulo->ano_correspondiente }}er Año)
+                        </h4>
+                        <a href="{{ route('materias.create', ['modulo_id' => $modulo->id]) }}" class="btn btn-sm btn-success">
+                            <i class="fas fa-plus"></i> Agregar Materia
+                        </a>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm">
+                           {{-- El contenido de la tabla no necesita cambios --}}
+                           <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Asignatura</th>
+                                    <th>Régimen</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($modulo->materias as $materia)
+                                    <tr>
+                                        <td>{{ $materia->codigo }}</td>
+                                        <td>{{ $materia->nombre }}</td>
+                                        <td>{{ $materia->regimen }}</td>
+                                        <td>
+                                            <a href="{{ route('materias.edit', $materia) }}" class="btn btn-xs btn-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center">No hay materias en este módulo.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @empty
+                <div class="alert alert-info">Este plan de estudio aún no tiene módulos.</div>
+            @endforelse
+        </div>
     </div>
-</div>
-<a href="{{ route('planes-de-estudio.index') }}" class="btn btn-secondary mt-3">
-    <i class="fas fa-arrow-left"></i> Volver
-</a>
+    <a href="{{ route('planes-de-estudio.index') }}" class="btn btn-secondary mt-3">
+        <i class="fas fa-arrow-left"></i> Volver
+    </a>
 @stop

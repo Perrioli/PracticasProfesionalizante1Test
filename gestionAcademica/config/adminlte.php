@@ -344,11 +344,6 @@ return [
             'icon' => 'fas fa-fw fa-book-open',
         ],
         [
-            'text' => 'Módulos',
-            'route' => 'modulos.index',
-            'icon' => 'fas fa-fw fa-layer-group',
-        ],
-        [
             'text' => 'Cursos',
             'route' => 'cursos.index',
             'icon' => 'fas fa-fw fa-school',
