@@ -327,21 +327,26 @@ return [
             'label' => 4,
             'label_color' => 'success',
         ],
-        ['header' => 'Gestion'],
-        [
-            'text' => 'Docentes',
-            'url' => 'admin/settings',
-            'icon' => 'fas fa-fw fa-user',
-        ],
+        ['header' => 'GESTIÓN PRINCIPAL'],
         [
             'text' => 'Alumnos',
-            'url' => 'admin/settings',
-            'icon' => 'fas fa-fw fa-user',
+            'route' => 'alumnos.index', // Usamos el nombre de la ruta
+            'icon' => 'fas fa-fw fa-user-graduate',
+        ],
+        [
+            'text' => 'Docentes',
+            'route' => 'docentes.index', // Usamos el nombre de la ruta
+            'icon' => 'fas fa-fw fa-chalkboard-teacher',
+        ],
+        [
+            'text' => 'Cursos',
+            'route' => 'cursos.index', // Usamos el nombre de la ruta
+            'icon' => 'fas fa-fw fa-school',
         ],
         [
             'text' => 'Planes de Estudio',
-            'url' => 'admin/settings',
-            'icon' => 'fas fa-fw fa-user',
+            'route' => 'planes-de-estudio.index', // Usamos el nombre de la ruta
+            'icon' => 'fas fa-fw fa-book-open',
         ],
     ],
 
