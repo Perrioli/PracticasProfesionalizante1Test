@@ -86,9 +86,12 @@ class AlumnoController extends Controller
     public function perfil(Alumno $alumno)
     {
         $fotoPerfil = $alumno->documentaciones()->where('tipo_documento', 'Foto 4x4')->first();
-        $modulosCursados = $alumno->modulos()->with('planEstudio', 'materias')->orderBy('orden')->get();
-        $carrera = $modulosCursados->isNotEmpty() ? $modulosCursados->first()->planEstudio : null;
+
+        $modulosCursados = $alumno->modulos()->with('materias')->orderBy('orden')->get();
+
         $materiasData = $alumno->materias()->with('docentes')->get()->keyBy('id');
+
+        $carrera = $modulosCursados->isNotEmpty() ? $modulosCursados->first()->planEstudio : null;
 
         return view('alumnos.perfil', compact('alumno', 'fotoPerfil', 'modulosCursados', 'materiasData', 'carrera'));
     }
@@ -128,9 +131,17 @@ class AlumnoController extends Controller
         $request->validate(['modulo_id' => 'required|exists:modulos,id']);
         $moduloId = $request->modulo_id;
 
+        // Esta parte funciona, inscribe al alumno en el módulo
         $alumno->modulos()->attach($moduloId, ['estado' => 'Cursando', 'ano_lectivo' => date('Y')]);
 
+        // Ahora, veamos si encuentra las materias de ese módulo
         $modulo = Modulo::with('materias')->find($moduloId);
+
+        // LÍNEA DE DEPURACIÓN CLAVE:
+        // Detendremos el programa aquí para ver qué contiene $modulo->materias
+        dd($modulo->materias);
+
+        // El código de abajo no se ejecutará por ahora
         $registros = [];
         foreach ($modulo->materias as $materia) {
             $registros[$materia->id] = ['estado' => 'Cursando'];
@@ -193,5 +204,18 @@ class AlumnoController extends Controller
 
         return redirect()->route('alumnos.academico.edit', $alumno)
             ->with('success', 'Alumno inscripto en las materias seleccionadas.');
+    }
+
+    public function enrollSingleMateria(Request $request, Alumno $alumno, Materia $materia)
+    {
+        if (!$alumno->haAprobadoCorrelativas($materia)) {
+            return back()->with('error', 'El alumno no ha aprobado las correlativas necesarias para esta materia.');
+        }
+
+        $alumno->materias()->syncWithoutDetaching([
+            $materia->id => ['estado' => 'Cursando']
+        ]);
+
+        return back()->with('success', 'Alumno inscripto a la materia exitosamente.');
     }
 }

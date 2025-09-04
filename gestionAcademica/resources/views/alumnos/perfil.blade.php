@@ -50,24 +50,14 @@
     </div>
 
     <div class="col-md-8">
-        {{-- Itera sobre cada módulo que el alumno ha cursado --}}
+        {{-- Tarjeta de Situación Académica --}}
         @forelse ($modulosCursados as $modulo)
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">
-                    <strong>Módulo {{ $modulo->orden }} ({{ $modulo->ano_correspondiente }}er Año)</strong> - Estado:
-                    @if ($modulo->pivot->estado == 'Aprobado')
-                    <span class="badge bg-success">{{ $modulo->pivot->estado }}</span>
-                    @else
+                    <strong>{{ $modulo->nombre }}</strong> - Estado:
                     <span class="badge bg-info">{{ $modulo->pivot->estado }}</span>
-                    @endif
                 </h3>
-                {{-- Botón para colapsar/expandir la tabla del módulo --}}
-                <div class="card-tools">
-                    <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                        <i class="fas fa-minus"></i>
-                    </button>
-                </div>
             </div>
             <div class="card-body p-0">
                 <table class="table table-striped">
@@ -80,8 +70,9 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($modulo->materias as $materia)
+                        @forelse ($modulo->materias as $materia)
                         @php
+                        // Busca la información específica de esta materia para este alumno
                         $data = $materiasData->get($materia->id);
                         @endphp
                         <tr>
@@ -94,16 +85,18 @@
                             <td colspan="3" class="text-center text-muted"><em>No inscripto</em></td>
                             @endif
                         </tr>
-                        @endforeach
+                        @empty
+                        <tr>
+                            <td colspan="4" class="text-center">No hay materias asignadas a este módulo.</td>
+                        </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
         </div>
         @empty
-        <div class="card">
-            <div class="card-body">
-                No hay información académica registrada para este alumno.
-            </div>
+        <div class="alert alert-light">
+            No hay información académica registrada para este alumno.
         </div>
         @endforelse
     </div>

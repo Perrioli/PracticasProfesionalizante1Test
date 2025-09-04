@@ -22,7 +22,7 @@
         </div>
     @endif
 
-    {{-- PASO 1: Formulario para SELECCIONAR MÓDULO --}}
+    {{-- PASO 1: Formulario para SELECCIONAR MÓDULO y ver sus materias --}}
     <div class="card card-info">
         <div class="card-header"><h3 class="card-title">Inscribir a Materias de un Nuevo Módulo</h3></div>
         <div class="card-body">
@@ -62,7 +62,7 @@
         </div>
     </div>
 
-    {{-- PASO 2: Tarjeta que aparece para INSCRIBIR en materias --}}
+    {{-- PASO 2: Tarjeta que aparece para INSCRIBIR en materias seleccionadas --}}
     @if (isset($materiasParaInscribir) && $materiasParaInscribir->isNotEmpty())
     <div class="card card-success">
         <div class="card-header"><h3 class="card-title">Seleccionar Materias para Inscribir del <strong>{{ $materiasParaInscribir->first()->modulo->nombre }}</strong></h3></div>
@@ -70,6 +70,7 @@
             <form action="{{ route('alumnos.materias.enroll') }}" method="POST">
                 @csrf
                 <input type="hidden" name="alumno_id" value="{{ $alumno->id }}">
+                <input type="hidden" name="modulo_id" value="{{ request('ver_modulo_id') }}">
                 <table class="table table-sm">
                     @foreach ($materiasParaInscribir as $materia)
                         @php
@@ -134,12 +135,13 @@
                         <tbody>
                             @foreach ($modulo->materias as $materia)
                                 @php $data = $materiasData->get($materia->id); @endphp
-                                @if ($data)
-                                    <tr>
-                                        <form action="{{ route('alumnos.materia.update', ['alumno' => $alumno, 'materia' => $materia]) }}" method="POST">
+                                <tr>
+                                    <td>{{ $materia->nombre }}</td>
+                                    @if ($data)
+                                        {{-- SI ESTÁ INSCRIPTO: Muestra el formulario de edición --}}
+                                        <form action="{{ route('alumnos.materia.update', ['alumno' => $alumno, 'materia' => $materia]) }}" method="POST" class="d-flex">
                                             @csrf
                                             @method('PUT')
-                                            <td>{{ $materia->nombre }}</td>
                                             <td>
                                                 <input type="number" name="nota_final" class="form-control form-control-sm" value="{{ $data->pivot->nota_final }}" step="0.01" min="0" max="10">
                                             </td>
@@ -154,17 +156,32 @@
                                             <td>{{ $data->docentes->first()->apellido ?? 'Sin asignar' }}</td>
                                             <td>
                                                 <button type="submit" class="btn btn-sm btn-success" title="Guardar"><i class="fas fa-save"></i></button>
-                                                </form> {{-- Se cierra el form de guardar --}}
-                                                
-                                                {{-- Formulario para quitar materia --}}
+                                        </form>
                                                 <form action="{{ route('alumnos.materia.destroy', ['alumno' => $alumno, 'materia' => $materia]) }}" method="POST" class="d-inline">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-sm btn-danger" title="Quitar" onclick="return confirm('¿Quitar esta materia del alumno?')"><i class="fas fa-trash"></i></button>
                                                 </form>
                                             </td>
-                                    </tr>
-                                @endif
+                                    @else
+                                        {{-- SI NO ESTÁ INSCRIPTO: Muestra el estado y el botón para inscribir --}}
+                                        <td colspan="3" class="text-center">
+                                            @if ($alumno->haAprobadoCorrelativas($materia))
+                                                <span class="badge bg-success">Disponible para inscripción</span>
+                                            @else
+                                                <span class="badge bg-danger">Correlativas pendientes</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if ($alumno->haAprobadoCorrelativas($materia))
+                                                <form action="{{ route('alumnos.materia.enroll', ['alumno' => $alumno, 'materia' => $materia]) }}" method="POST">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-sm btn-primary">Inscribir</button>
+                                                </form>
+                                            @endif
+                                        </td>
+                                    @endif
+                                </tr>
                             @endforeach
                         </tbody>
                     </table>

@@ -33,6 +33,8 @@ Route::post('alumnos/{alumno}/academico/enroll', [AlumnoController::class, 'enro
 Route::put('alumnos/{alumno}/materias/{materia}', [AlumnoController::class, 'updateMateria'])->name('alumnos.materia.update');
 Route::delete('alumnos/{alumno}/materias/{materia}', [AlumnoController::class, 'destroyMateria'])->name('alumnos.materia.destroy');
 Route::post('/alumnos/materias/enroll', [AlumnoController::class, 'enrollMaterias'])->name('alumnos.materias.enroll');
+Route::post('alumnos/{alumno}/materias/{materia}/enroll', [AlumnoController::class, 'enrollSingleMateria'])->name('alumnos.materia.enroll');
+
 
 // Rutas para la estructura académica
 Route::resource('planes-de-estudio', PlanEstudioController::class)->parameters(['planes-de-estudio' => 'planEstudio']);
