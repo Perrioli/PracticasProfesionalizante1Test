@@ -93,19 +93,33 @@ class AlumnoController extends Controller
         return view('alumnos.perfil', compact('alumno', 'fotoPerfil', 'modulosCursados', 'materiasData', 'carrera'));
     }
 
-    public function editAcademico(Alumno $alumno)
+    public function editAcademico(Request $request, Alumno $alumno)
     {
         $modulosCursados = $alumno->modulos()->with('materias')->orderBy('orden')->get();
         $materiasData = $alumno->materias()->with('docentes')->get()->keyBy('id');
         $planesDeEstudio = PlanEstudio::orderBy('nombre')->get();
-        $modulosDisponibles = Modulo::orderBy('orden')->get();
+        $modulosInscriptosIds = $alumno->modulos->pluck('id');
+        $todosLosModulos = Modulo::with('prerequisite')->whereNotIn('id', $modulosInscriptosIds)->orderBy('orden')->get();
+        $modulosDisponibles = $todosLosModulos->filter(function ($modulo) use ($alumno) {
+            if (!$modulo->prerequisite) return true;
+            return $alumno->haAprobadoModulo($modulo->prerequisite);
+        });
+
+        $materiasParaInscribir = null;
+        if ($request->has('ver_modulo_id')) {
+            $moduloSeleccionado = Modulo::with('materias')->find($request->ver_modulo_id);
+            if ($moduloSeleccionado) {
+                $materiasParaInscribir = $moduloSeleccionado->materias;
+            }
+        }
 
         return view('alumnos.academico', compact(
             'alumno',
             'modulosCursados',
             'materiasData',
             'planesDeEstudio',
-            'modulosDisponibles'
+            'modulosDisponibles',
+            'materiasParaInscribir'
         ));
     }
 
@@ -132,11 +146,52 @@ class AlumnoController extends Controller
             'estado' => 'required|string|in:Cursando,Aprobada,Previa,Libre',
         ]);
 
+        if (in_array($request->estado, ['Cursando', 'Aprobada'])) {
+
+            if (!$alumno->haAprobadoCorrelativas($materia)) {
+
+                return back()->with('error', 'El alumno no ha aprobado todas las correlativas necesarias para esta materia.');
+            }
+        }
+
         $alumno->materias()->updateExistingPivot($materia->id, [
             'nota_final' => $request->nota_final,
             'estado' => $request->estado,
         ]);
 
         return back()->with('success', 'Información académica actualizada exitosamente.');
+    }
+
+    public function destroyMateria(Alumno $alumno, Materia $materia)
+    {
+        $alumno->materias()->detach($materia->id);
+
+        return back()->with('success', 'Materia quitada del alumno exitosamente.');
+    }
+    public function enrollMaterias(Request $request)
+    {
+        $request->validate([
+            'alumno_id' => 'required|exists:alumnos,id',
+            'materias' => 'required|array'
+        ]);
+
+        $alumno = Alumno::find($request->alumno_id);
+        $anoLectivo = date('Y');
+
+        if ($request->has('modulo_id')) {
+            $alumno->modulos()->syncWithoutDetaching([
+                $request->modulo_id => ['estado' => 'Cursando', 'ano_lectivo' => $anoLectivo]
+            ]);
+        }
+
+        $registros = [];
+        foreach ($request->materias as $materiaId) {
+            $registros[$materiaId] = ['estado' => 'Cursando'];
+        }
+
+        $alumno->materias()->syncWithoutDetaching($registros);
+
+        return redirect()->route('alumnos.academico.edit', $alumno)
+            ->with('success', 'Alumno inscripto en las materias seleccionadas.');
     }
 }

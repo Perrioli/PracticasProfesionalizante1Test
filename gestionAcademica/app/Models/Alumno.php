@@ -40,4 +40,37 @@ class Alumno extends Model
             ->withPivot('nota_final', 'estado', 'fecha_evaluacion')
             ->withTimestamps();
     }
+
+    public function haAprobadoCorrelativas(Materia $materia): bool
+    {
+        $correlativasIds = $materia->prerequisites()->pluck('materias.id');
+
+        if ($correlativasIds->isEmpty()) {
+            return true;
+        }
+
+        $materiasAprobadasIds = $this->materias()
+            ->wherePivot('estado', 'Aprobada')
+            ->pluck('materias.id');
+
+        $correlativasFaltantes = $correlativasIds->diff($materiasAprobadasIds);
+
+        return $correlativasFaltantes->isEmpty();
+    }
+
+    public function haAprobadoModulo(Modulo $modulo): bool
+    {
+        $materiasDelModuloIds = $modulo->materias()->pluck('id');
+
+        if ($materiasDelModuloIds->isEmpty()) {
+            return true;
+        }
+
+        $materiasAprobadasCount = $this->materias()
+            ->whereIn('materia_id', $materiasDelModuloIds)
+            ->wherePivot('estado', 'Aprobada')
+            ->count();
+
+        return $materiasAprobadasCount === $materiasDelModuloIds->count();
+    }
 }

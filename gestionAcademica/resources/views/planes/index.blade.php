@@ -7,6 +7,9 @@
 @stop
 
 @section('content')
+@if (session('error'))
+<div class="alert alert-danger">{{ session('error') }}</div>
+@endif
 <div class="mb-3">
     <a href="{{ route('planes-de-estudio.create') }}" class="btn btn-primary">
         <i class="fas fa-plus"></i> Agregar Plan de Estudio

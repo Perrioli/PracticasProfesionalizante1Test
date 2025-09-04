@@ -23,7 +23,12 @@ class Modulo extends Model
     public function alumnos()
     {
         return $this->belongsToMany(Alumno::class, 'alumno_modulo')
-                    ->withPivot('estado', 'ano_lectivo')
-                    ->withTimestamps();
+            ->withPivot('estado', 'ano_lectivo')
+            ->withTimestamps();
+    }
+
+    public function prerequisite()
+    {
+        return $this->belongsTo(Modulo::class, 'prerequisite_modulo_id');
     }
 }

@@ -64,7 +64,13 @@ class PlanEstudioController extends Controller
 
     public function destroy(PlanEstudio $planEstudio)
     {
+        if ($planEstudio->modulos()->count() > 0) {
+            return back()->with('error', 'No se puede eliminar este Plan de Estudio porque tiene módulos asociados. Por favor, elimine los módulos primero.');
+        }
+
         $planEstudio->delete();
-        return redirect()->route('planes-de-estudio.index')->with('success', 'Plan de Estudio eliminado exitosamente.');
+
+        return redirect()->route('planes-de-estudio.index')
+            ->with('success', 'Plan de Estudio eliminado exitosamente.');
     }
 }
