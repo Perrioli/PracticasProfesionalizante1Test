@@ -44,9 +44,12 @@ class AlumnoController extends Controller
         return view('alumnos.show', compact('alumno'));
     }
 
-    public function edit(Alumno $alumno)
+    public function edit(Curso $curso)
     {
-        return view('alumnos.edit', compact('alumno'));
+        $planes = PlanEstudio::orderBy('nombre')->get();
+        $modulos = Modulo::orderBy('orden')->get();
+
+        return view('cursos.edit', compact('curso', 'planes', 'modulos'));
     }
 
     public function update(Request $request, Alumno $alumno)
@@ -87,18 +90,22 @@ class AlumnoController extends Controller
 
     public function perfil(Alumno $alumno)
     {
+        // Datos básicos del alumno
         $fotoPerfil = $alumno->documentaciones()->where('tipo_documento', 'Foto 4x4')->first();
         $modulosCursados = $alumno->modulos()->with('materias')->orderBy('orden')->get();
         $materiasData = $alumno->materias()->get()->keyBy('id');
         $carrera = $modulosCursados->isNotEmpty() ? $modulosCursados->first()->planEstudio : null;
 
-        $cursosDeLosModulos = Curso::whereIn('modulo_id', $modulosCursados->pluck('id'))->pluck('id');
-        $horarios = Horario::whereIn('curso_id', $cursosDeLosModulos)
+        $cursos = Curso::whereIn('modulo_id', $modulosCursados->pluck('id'))
+            ->get()
+            ->keyBy('modulo_id');
+
+        $horarios = Horario::whereIn('curso_id', $cursos->pluck('id'))
             ->with('docente')
             ->get()
             ->keyBy('materia_id');
 
-        return view('alumnos.perfil', compact('alumno', 'fotoPerfil', 'modulosCursados', 'materiasData', 'carrera', 'horarios'));
+        return view('alumnos.perfil', compact('alumno', 'fotoPerfil', 'modulosCursados', 'materiasData', 'carrera', 'cursos', 'horarios'));
     }
 
     public function editAcademico(Request $request, Alumno $alumno)

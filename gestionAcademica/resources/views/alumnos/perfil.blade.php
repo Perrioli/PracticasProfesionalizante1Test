@@ -55,7 +55,13 @@
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">
-                    <strong>{{ $modulo->nombre }}</strong> - Estado:
+                    @php
+                    // Buscamos el curso que corresponde a este módulo en la colección que enviamos
+                    $curso = $cursos->get($modulo->id);
+                    @endphp
+
+                    {{-- Mostramos el nombre del curso, y entre paréntesis el del módulo --}}
+                    <strong>{{ $curso->nombre ?? 'Curso no definido' }}</strong> ({{ $modulo->nombre }}) - Estado:
                     <span class="badge bg-info">{{ $modulo->pivot->estado }}</span>
                 </h3>
             </div>
