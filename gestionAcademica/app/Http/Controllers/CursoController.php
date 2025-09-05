@@ -12,16 +12,17 @@ use Illuminate\Validation\Rule;
 
 class CursoController extends Controller
 {
-    public function index()
-    {
-        $cursos = Curso::with([
-            'modulo.planEstudio',
-            'horario.materia',
-            'horario.docente'
-        ])->latest()->get();
-
-        return view('cursos.index', compact('cursos'));
-    }
+public function index()
+{
+    // anidaciones
+    $planesDeEstudio = PlanEstudio::with([
+        'modulos.cursos.modulo',
+        'modulos.cursos.horario.materia',
+        'modulos.cursos.horario.docente' 
+    ])->get();
+    
+    return view('cursos.index', compact('planesDeEstudio'));
+}
 
     public function create()
     {
