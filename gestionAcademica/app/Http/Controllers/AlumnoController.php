@@ -89,7 +89,7 @@ class AlumnoController extends Controller
     {
         $fotoPerfil = $alumno->documentaciones()->where('tipo_documento', 'Foto 4x4')->first();
         $modulosCursados = $alumno->modulos()->with('materias')->orderBy('orden')->get();
-        $materiasData = $alumno->materias()->get()->keyBy('id'); 
+        $materiasData = $alumno->materias()->get()->keyBy('id');
         $carrera = $modulosCursados->isNotEmpty() ? $modulosCursados->first()->planEstudio : null;
 
         $cursosDeLosModulos = Curso::whereIn('modulo_id', $modulosCursados->pluck('id'))->pluck('id');
@@ -104,14 +104,16 @@ class AlumnoController extends Controller
     public function editAcademico(Request $request, Alumno $alumno)
     {
         $modulosCursados = $alumno->modulos()->with('materias')->orderBy('orden')->get();
-        $materiasData = $alumno->materias()->with('docentes')->get()->keyBy('id');
+        $materiasData = $alumno->materias()->get()->keyBy('id');
+
+        $cursosDeLosModulos = Curso::whereIn('modulo_id', $modulosCursados->pluck('id'))->pluck('id');
+        $horarios = Horario::whereIn('curso_id', $cursosDeLosModulos)
+            ->with('docente')
+            ->get()
+            ->keyBy('materia_id');
+
         $planesDeEstudio = PlanEstudio::orderBy('nombre')->get();
-        $modulosInscriptosIds = $alumno->modulos->pluck('id');
-        $todosLosModulos = Modulo::with('prerequisite')->whereNotIn('id', $modulosInscriptosIds)->orderBy('orden')->get();
-        $modulosDisponibles = $todosLosModulos->filter(function ($modulo) use ($alumno) {
-            if (!$modulo->prerequisite) return true;
-            return $alumno->haAprobadoModulo($modulo->prerequisite);
-        });
+        $modulosDisponibles = Modulo::with('prerequisite')->whereNotIn('id', $alumno->modulos->pluck('id'))->orderBy('orden')->get();
 
         $materiasParaInscribir = null;
         if ($request->has('ver_modulo_id')) {
@@ -125,6 +127,7 @@ class AlumnoController extends Controller
             'alumno',
             'modulosCursados',
             'materiasData',
+            'horarios',
             'planesDeEstudio',
             'modulosDisponibles',
             'materiasParaInscribir'
@@ -136,17 +139,12 @@ class AlumnoController extends Controller
         $request->validate(['modulo_id' => 'required|exists:modulos,id']);
         $moduloId = $request->modulo_id;
 
-        // Esta parte funciona, inscribe al alumno en el módulo
         $alumno->modulos()->attach($moduloId, ['estado' => 'Cursando', 'ano_lectivo' => date('Y')]);
 
-        // Ahora, veamos si encuentra las materias de ese módulo
         $modulo = Modulo::with('materias')->find($moduloId);
 
-        // LÍNEA DE DEPURACIÓN CLAVE:
-        // Detendremos el programa aquí para ver qué contiene $modulo->materias
         dd($modulo->materias);
 
-        // El código de abajo no se ejecutará por ahora
         $registros = [];
         foreach ($modulo->materias as $materia) {
             $registros[$materia->id] = ['estado' => 'Cursando'];
