@@ -12,17 +12,17 @@ use Illuminate\Validation\Rule;
 
 class CursoController extends Controller
 {
-public function index()
-{
-    // anidaciones
-    $planesDeEstudio = PlanEstudio::with([
-        'modulos.cursos.modulo',
-        'modulos.cursos.horario.materia',
-        'modulos.cursos.horario.docente' 
-    ])->get();
-    
-    return view('cursos.index', compact('planesDeEstudio'));
-}
+    public function index()
+    {
+        // anidaciones
+        $planesDeEstudio = PlanEstudio::with([
+            'modulos.cursos.modulo',
+            'modulos.cursos.horario.materia',
+            'modulos.cursos.horario.docente'
+        ])->get();
+
+        return view('cursos.index', compact('planesDeEstudio'));
+    }
 
     public function create()
     {
@@ -88,43 +88,76 @@ public function index()
 
     public function horario(Curso $curso)
     {
+        $minTime = '';
+        $maxTime = '';
+
+        switch ($curso->turno) {
+            case 'Mañana':
+                $minTime = '08:00';
+                $maxTime = '13:00';
+                break;
+            case 'Tarde':
+                $minTime = '13:20';
+                $maxTime = '18:00';
+                break;
+            case 'Noche':
+                $minTime = '18:00';
+                $maxTime = '22:00';
+                break;
+        }
+
         $materiasDisponibles = $curso->modulo->materias;
         $docentesDisponibles = Docente::all();
-
         $horario = Horario::where('curso_id', $curso->id)
             ->with(['materia', 'docente'])
-            ->orderBy('dia_semana')
-            ->orderBy('hora_inicio')
-            ->get();
+            ->orderBy('dia_semana')->orderBy('hora_inicio')->get();
 
-        return view('cursos.horario', compact('curso', 'horario', 'materiasDisponibles', 'docentesDisponibles'));
+        return view('cursos.horario', compact('curso', 'horario', 'materiasDisponibles', 'docentesDisponibles', 'minTime', 'maxTime'));
     }
 
     public function addHorario(Request $request, Curso $curso)
     {
+        // rangos
+        $minTime = '';
+        $maxTime = '';
+
+        switch ($curso->turno) {
+            case 'Mañana':
+                $minTime = '08:00';
+                $maxTime = '13:00';
+                break;
+            case 'Tarde':
+                $minTime = '13:20';
+                $maxTime = '18:00';
+                break;
+            case 'Noche':
+                $minTime = '18:00';
+                $maxTime = '22:00';
+                break;
+        }
+
+        // Validación de reglas de horario
         $request->validate([
             'materia_id' => 'required|exists:materias,id',
             'docente_id' => 'required|exists:docentes,id',
             'dia_semana' => 'required|string',
-            'hora_inicio' => 'required|date_format:H:i',
-            'hora_fin' => 'required|date_format:H:i|after:hora_inicio',
+            'hora_inicio' => "required|date_format:H:i|after_or_equal:$minTime",
+            'hora_fin' => "required|date_format:H:i|after:hora_inicio|before_or_equal:$maxTime",
+        ], [
+            'hora_inicio.after_or_equal' => "La hora de inicio debe estar dentro del rango del turno ($minTime - $maxTime).",
+            'hora_fin.before_or_equal' => "La hora de fin debe estar dentro del rango del turno ($minTime - $maxTime).",
         ]);
-
-        // Verificación de conflicto de horario para el docente
+        // Verificar conflictos de horario para el docente
         $conflicto = Horario::where('docente_id', $request->docente_id)
-            ->where('dia_semana', $request->dia_semana)
-            ->where(function ($query) use ($request) {
-                $query->where('hora_inicio', '<', $request->hora_fin)
-                    ->where('hora_fin', '>', $request->hora_inicio);
-            })
             ->exists();
 
         if ($conflicto) {
-            return back()->withInput()
-                ->with('error', 'Conflicto de horario: El docente ya tiene una clase asignada en ese día y rango horario.');
+            return back()->withInput()->with('error', 'Conflicto de horario: El docente ya tiene una clase asignada...');
         }
 
-        $curso->materias()->attach($request->materia_id, [
+        Horario::create([
+            'curso_id' => $curso->id,
+            'materia_id' => $request->materia_id,
             'docente_id' => $request->docente_id,
             'dia_semana' => $request->dia_semana,
             'hora_inicio' => $request->hora_inicio,

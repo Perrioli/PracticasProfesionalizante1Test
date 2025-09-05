@@ -53,66 +53,65 @@
                                     </div>
                                 </div>
                                 <div class="card-body" style="display: none;">
+                                    {{-- INICIO DE LA NUEVA LÓGICA DE HORARIO --}}
                                     @php
                                         $dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
                                         $horas = [];
-
-                                        // LÓGICA PARA DEFINIR HORAS SEGÚN EL TURNO
                                         if ($curso->turno == 'Mañana') {
-                                            $horas = [
-                                                '1' => '08:00 - 08:40', '2' => '08:40 - 09:20',
-                                                '3' => '09:20 - 10:00', '4' => '10:20 - 11:00',
-                                                '5' => '11:00 - 11:40', '6' => '11:40 - 12:20',
-                                                '7' => '12:20 - 13:00',
-                                            ];
+                                            $horas = ['08:00', '08:40', '09:20', '10:00', '10:40', '11:20', '12:00'];
                                         } elseif ($curso->turno == 'Noche') {
-                                            $horas = [
-                                                '1' => '18:00 - 18:40', '2' => '18:40 - 19:20',
-                                                '3' => '19:20 - 20:00', '4' => '20:20 - 21:00',
-                                                '5' => '21:00 - 21:40', '6' => '21:40 - 22:20',
-                                            ];
-                                        } else { // Turno Tarde por defecto
-                                            $horas = [
-                                                '1' => '13:20 - 14:00', '2' => '14:00 - 14:40',
-                                                '3' => '14:40 - 15:20', '4' => '15:20 - 16:00',
-                                                '5' => '16:00 - 16:40', '6' => '16:40 - 17:20',
-                                                '7' => '17:20 - 18:00',
-                                            ];
+                                            $horas = ['18:00', '18:40', '19:20', '20:00', '20:40', '21:20'];
+                                        } else { // Tarde
+                                            $horas = ['13:20', '14:00', '14:40', '15:20', '16:00', '16:40', '17:20'];
                                         }
-                                        
-                                        $horarioOrganizado = $curso->horario->groupBy('dia_semana');
+
+                                        $scheduleGrid = [];
+                                        foreach ($curso->horario as $item) {
+                                            $start = \Carbon\Carbon::parse($item->hora_inicio);
+                                            $end = \Carbon\Carbon::parse($item->hora_fin);
+                                            $durationInSlots = $start->diffInMinutes($end) / 40; // Asumiendo slots de 40 min
+                                            
+                                            $scheduleGrid[$item->dia_semana][$start->format('H:i')] = [
+                                                'materia' => $item->materia,
+                                                'docente' => $item->docente,
+                                                'rowspan' => $durationInSlots
+                                            ];
+
+                                            // Marcamos las celdas que serán ocupadas por el rowspan
+                                            for ($i = 1; $i < $durationInSlots; $i++) {
+                                                $nextSlot = $start->addMinutes(40)->format('H:i');
+                                                $scheduleGrid[$item->dia_semana][$nextSlot] = 'occupied';
+                                            }
+                                        }
                                     @endphp
 
                                     <table class="table table-bordered text-center">
                                         <thead class="thead-light">
                                             <tr>
-                                                <th style="width: 12%;">Horas</th>
+                                                <th style="width: 10%;">Hora</th>
                                                 @foreach ($dias as $dia)
                                                     <th>{{ $dia }}</th>
                                                 @endforeach
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach ($horas as $num => $rango)
+                                            @foreach ($horas as $hora)
                                                 <tr>
-                                                    <td><strong>{{ $num }}°</strong><br><small>{{ $rango }}</small></td>
+                                                    <td>{{ $hora }}</td>
                                                     @foreach ($dias as $dia)
                                                         @php
-                                                            $horaInicioSlot = \Carbon\Carbon::parse(trim(explode('-', $rango)[0]));
-                                                            $clase = ($horarioOrganizado[$dia] ?? collect())->first(function ($item) use ($horaInicioSlot) {
-                                                                $horaInicioClase = \Carbon\Carbon::parse($item->hora_inicio);
-                                                                $horaFinClase = \Carbon\Carbon::parse($item->hora_fin);
-                                                                return $horaInicioSlot->between($horaInicioClase, $horaFinClase, false);
-                                                            });
+                                                            $cellData = $scheduleGrid[$dia][$hora] ?? null;
                                                         @endphp
-                                                        <td class="{{ $clase ? 'p-1 align-middle' : '' }}">
-                                                            @if ($clase)
-                                                                <div class="bg-light p-2 rounded" style="font-size: 0.85rem;">
-                                                                    <strong>{{ $clase->materia->nombre ?? 'N/A' }}</strong><br>
-                                                                    <small>{{ $clase->docente->apellido ?? 'N/A' }}</small>
-                                                                </div>
-                                                            @endif
-                                                        </td>
+                                                        @if ($cellData === 'occupied')
+                                                            {{-- No renderizar celda, ya fue ocupada por rowspan --}}
+                                                        @elseif (is_array($cellData))
+                                                            <td rowspan="{{ $cellData['rowspan'] }}" class="p-1 align-middle bg-light">
+                                                                <strong>{{ $cellData['materia']->nombre ?? 'N/A' }}</strong><br>
+                                                                <small>{{ $cellData['docente']->apellido ?? 'N/A' }}</small>
+                                                            </td>
+                                                        @else
+                                                            <td></td> {{-- Celda vacía --}}
+                                                        @endif
                                                     @endforeach
                                                 </tr>
                                             @endforeach

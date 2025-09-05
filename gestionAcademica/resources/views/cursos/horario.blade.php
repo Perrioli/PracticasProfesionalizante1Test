@@ -64,11 +64,13 @@
                 </div>
                 <div class="col-md-2">
                     <label>Hora Inicio</label>
-                    <input type="time" name="hora_inicio" class="form-control" required>
+                    <input type="time" name="hora_inicio" class="form-control"
+                        min="{{ $minTime }}" max="{{ $maxTime }}" required>
                 </div>
                 <div class="col-md-2">
                     <label>Hora Fin</label>
-                    <input type="time" name="hora_fin" class="form-control" required>
+                    <input type="time" name="hora_fin" class="form-control"
+                        min="{{ $minTime }}" max="{{ $maxTime }}" required>
                 </div>
             </div>
             <div class="row mt-3">
