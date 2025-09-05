@@ -9,6 +9,7 @@ use App\Models\Docente;
 use App\Models\PlanEstudio;
 use App\Models\Horario;
 use Illuminate\Validation\Rule;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class CursoController extends Controller
 {
@@ -171,6 +172,34 @@ class CursoController extends Controller
     {
         $horario->delete();
         return back()->with('success', 'Asignación eliminada del horario exitosamente.');
+    }
+
+    public function descargarHorarioPDF(Curso $curso)
+    {
+        $dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+        $horas = [];
+        if ($curso->turno == 'Mañana') {
+            $horas = ['08:00', '08:40', '09:20', '10:00', '10:40', '11:20', '12:00'];
+        } elseif ($curso->turno == 'Noche') {
+            $horas = ['18:00', '18:40', '19:20', '20:00', '20:40', '21:20'];
+        } else {
+            $horas = ['13:20', '14:00', '14:40', '15:20', '16:00', '16:40', '17:20'];
+        }
+        $horarioOrganizado = $curso->horario->groupBy('dia_semana');
+
+        // array con todos los datos de la vista del PDF
+        $data = [
+            'curso' => $curso,
+            'dias' => $dias,
+            'horas' => $horas,
+            'horarioOrganizado' => $horarioOrganizado
+        ];
+
+        // vista del PDF con los datos
+        $pdf = PDF::loadView('cursos.horario_pdf', $data);
+
+        // Devolvemos el PDF para que se descargue
+        return $pdf->download('horario-' . $curso->nombre . '.pdf');
     }
 
     public function destroy(Curso $curso)

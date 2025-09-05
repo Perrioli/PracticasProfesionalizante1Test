@@ -57,4 +57,8 @@ Route::post('/alumnos/{alumno}/documentaciones', [DocumentacionController::class
 Route::delete('/documentaciones/{documentacion}', [DocumentacionController::class, 'destroy'])->name('documentaciones.destroy');
 Route::get('/documentaciones/{documentacion}/ver', [DocumentacionController::class, 'verArchivo'])->name('documentaciones.ver');
 
+// Rutas para Documentación PDF
+Route::get('/cursos/{curso}/horario/pdf', [CursoController::class, 'descargarHorarioPDF'])->name('cursos.horario.pdf');
+
+
 require __DIR__ . '/auth.php';
