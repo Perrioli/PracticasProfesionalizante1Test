@@ -22,12 +22,10 @@
             @endif
 
             @forelse ($planesDeEstudio as $plan)
-                {{-- 1. Añadimos la clase 'collapsed-card' aquí --}}
                 <div class="card card-outline card-info mb-3 collapsed-card">
                     <div class="card-header">
                         <h3 class="card-title"><strong>{{ $plan->nombre }}</strong></h3>
                         <div class="card-tools">
-                            {{-- 2. Cambiamos el ícono a 'fa-plus' para que coincida con el estado colapsado --}}
                             <button type="button" class="btn btn-tool" data-card-widget="collapse" title="Ver/Ocultar Cursos">
                                 <i class="fas fa-plus"></i>
                             </button>
@@ -35,7 +33,6 @@
                     </div>
                     <div class="card-body">
                         @forelse ($plan->modulos->flatMap->cursos as $curso)
-                            {{-- 3. Añadimos también 'collapsed-card' aquí para los cursos anidados --}}
                             <div class="card card-outline card-secondary mb-2 collapsed-card">
                                 <div class="card-header d-flex align-items-center">
                                     <div class="mr-auto">
@@ -56,19 +53,69 @@
                                     </div>
                                 </div>
                                 <div class="card-body" style="display: none;">
-                                    <table class="table table-sm">
-                                        <thead><tr><th>Materia</th><th>Docente</th><th>Día</th><th>Horario</th></tr></thead>
+                                    @php
+                                        $dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+                                        $horas = [];
+
+                                        // LÓGICA PARA DEFINIR HORAS SEGÚN EL TURNO
+                                        if ($curso->turno == 'Mañana') {
+                                            $horas = [
+                                                '1' => '08:00 - 08:40', '2' => '08:40 - 09:20',
+                                                '3' => '09:20 - 10:00', '4' => '10:20 - 11:00',
+                                                '5' => '11:00 - 11:40', '6' => '11:40 - 12:20',
+                                                '7' => '12:20 - 13:00',
+                                            ];
+                                        } elseif ($curso->turno == 'Noche') {
+                                            $horas = [
+                                                '1' => '18:00 - 18:40', '2' => '18:40 - 19:20',
+                                                '3' => '19:20 - 20:00', '4' => '20:20 - 21:00',
+                                                '5' => '21:00 - 21:40', '6' => '21:40 - 22:20',
+                                            ];
+                                        } else { // Turno Tarde por defecto
+                                            $horas = [
+                                                '1' => '13:20 - 14:00', '2' => '14:00 - 14:40',
+                                                '3' => '14:40 - 15:20', '4' => '15:20 - 16:00',
+                                                '5' => '16:00 - 16:40', '6' => '16:40 - 17:20',
+                                                '7' => '17:20 - 18:00',
+                                            ];
+                                        }
+                                        
+                                        $horarioOrganizado = $curso->horario->groupBy('dia_semana');
+                                    @endphp
+
+                                    <table class="table table-bordered text-center">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th style="width: 12%;">Horas</th>
+                                                @foreach ($dias as $dia)
+                                                    <th>{{ $dia }}</th>
+                                                @endforeach
+                                            </tr>
+                                        </thead>
                                         <tbody>
-                                            @forelse ($curso->horario as $horarioItem)
+                                            @foreach ($horas as $num => $rango)
                                                 <tr>
-                                                    <td>{{ $horarioItem->materia->nombre ?? 'N/A' }}</td>
-                                                    <td>{{ $horarioItem->docente->apellido ?? 'N/A' }}, {{ $horarioItem->docente->nombre ?? '' }}</td>
-                                                    <td>{{ $horarioItem->dia_semana }}</td>
-                                                    <td>{{ \Carbon\Carbon::parse($horarioItem->hora_inicio)->format('H:i') }} - {{ \Carbon\Carbon::parse($horarioItem->hora_fin)->format('H:i') }}</td>
+                                                    <td><strong>{{ $num }}°</strong><br><small>{{ $rango }}</small></td>
+                                                    @foreach ($dias as $dia)
+                                                        @php
+                                                            $horaInicioSlot = \Carbon\Carbon::parse(trim(explode('-', $rango)[0]));
+                                                            $clase = ($horarioOrganizado[$dia] ?? collect())->first(function ($item) use ($horaInicioSlot) {
+                                                                $horaInicioClase = \Carbon\Carbon::parse($item->hora_inicio);
+                                                                $horaFinClase = \Carbon\Carbon::parse($item->hora_fin);
+                                                                return $horaInicioSlot->between($horaInicioClase, $horaFinClase, false);
+                                                            });
+                                                        @endphp
+                                                        <td class="{{ $clase ? 'p-1 align-middle' : '' }}">
+                                                            @if ($clase)
+                                                                <div class="bg-light p-2 rounded" style="font-size: 0.85rem;">
+                                                                    <strong>{{ $clase->materia->nombre ?? 'N/A' }}</strong><br>
+                                                                    <small>{{ $clase->docente->apellido ?? 'N/A' }}</small>
+                                                                </div>
+                                                            @endif
+                                                        </td>
+                                                    @endforeach
                                                 </tr>
-                                            @empty
-                                                <tr><td colspan="4" class="text-muted text-center">No hay horario asignado para este curso.</td></tr>
-                                            @endforelse
+                                            @endforeach
                                         </tbody>
                                     </table>
                                 </div>
