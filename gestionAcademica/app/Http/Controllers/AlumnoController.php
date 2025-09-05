@@ -7,6 +7,8 @@ use App\Models\Modulo;
 use App\Models\Materia;
 use App\Models\PlanEstudio;
 use Illuminate\Http\Request;
+use App\Models\Curso;
+use App\Models\Horario;
 
 class AlumnoController extends Controller
 {
@@ -86,14 +88,17 @@ class AlumnoController extends Controller
     public function perfil(Alumno $alumno)
     {
         $fotoPerfil = $alumno->documentaciones()->where('tipo_documento', 'Foto 4x4')->first();
-
         $modulosCursados = $alumno->modulos()->with('materias')->orderBy('orden')->get();
-
-        $materiasData = $alumno->materias()->with('docentes')->get()->keyBy('id');
-
+        $materiasData = $alumno->materias()->get()->keyBy('id'); 
         $carrera = $modulosCursados->isNotEmpty() ? $modulosCursados->first()->planEstudio : null;
 
-        return view('alumnos.perfil', compact('alumno', 'fotoPerfil', 'modulosCursados', 'materiasData', 'carrera'));
+        $cursosDeLosModulos = Curso::whereIn('modulo_id', $modulosCursados->pluck('id'))->pluck('id');
+        $horarios = Horario::whereIn('curso_id', $cursosDeLosModulos)
+            ->with('docente')
+            ->get()
+            ->keyBy('materia_id');
+
+        return view('alumnos.perfil', compact('alumno', 'fotoPerfil', 'modulosCursados', 'materiasData', 'carrera', 'horarios'));
     }
 
     public function editAcademico(Request $request, Alumno $alumno)

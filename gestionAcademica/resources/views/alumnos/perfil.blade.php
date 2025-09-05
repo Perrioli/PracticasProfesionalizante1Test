@@ -72,15 +72,16 @@
                     <tbody>
                         @forelse ($modulo->materias as $materia)
                         @php
-                        // Busca la información específica de esta materia para este alumno
                         $data = $materiasData->get($materia->id);
+                        // Buscamos la información del horario para esta materia
+                        $horarioItem = $horarios->get($materia->id);
                         @endphp
                         <tr>
                             <td>{{ $materia->nombre }}</td>
                             @if ($data)
                             <td><span class="badge bg-primary">{{ $data->pivot->nota_final ?? '---' }}</span></td>
                             <td>{{ $data->pivot->estado }}</td>
-                            <td>{{ $data->docentes->first()->apellido ?? 'Sin asignar' }}</td>
+                            <td>{{ $horarioItem->docente->apellido ?? 'Sin asignar' }}, {{ $horarioItem->docente->nombre ?? '' }}</td>
                             @else
                             <td colspan="3" class="text-center text-muted"><em>No inscripto</em></td>
                             @endif
